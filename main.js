@@ -1,11 +1,11 @@
 var $canvas = document.createElement("canvas");
-document.body.appendChild($canvas);
+document.getElementById('canvas').appendChild($canvas);
 
 const menu_width = 200;
 let board_width = 500;
 if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
     // true for mobile device
-    board_width  = (window.innerWidth  || document.body.clientWidth) - menu_width;
+    board_width = (window.innerWidth || document.body.clientWidth) - menu_width;
 }
 $canvas.width = board_width + menu_width;
 $canvas.height = board_width;
@@ -20,6 +20,7 @@ var $game_config = {
     menu_width,
     mine_num: 0,
     block_side_num: 0,
+    select_type: -1
 }
 function getGameConfig(keyword) {
     switch (keyword) {
@@ -413,7 +414,11 @@ function init() {
     })
     $canvas.addEventListener("mouseup", (event) => {
         var rect = $canvas.getBoundingClientRect();
-        $event_queue.push({ which: event.button == 2 ? 1 : 0, x: event.clientX - rect.left, y: event.clientY - rect.top });
+        $event_queue.push({
+            which: (event.button == 2 || $game_config.select_type === 1) ? 1 : 0,
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top
+        });
     });
 }
 
@@ -443,3 +448,12 @@ document.getElementById("run_button").addEventListener('click', () => {
         update();
     }, 34); // 30 fps
 })
+
+var radioButtonList = document.getElementsByName('clickType');
+radioButtonList.forEach(button => button.addEventListener('click', () => {
+    radioButtonList.forEach(button => {
+        if (button.checked) {
+            $game_config.select_type = button.value === 'Click' ? 0 : 1;
+        }
+    });
+}));
