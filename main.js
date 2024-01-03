@@ -4,11 +4,13 @@
 var $canvas = document.createElement("canvas");
 document.getElementById('canvas').appendChild($canvas);
 
-const menu_width = 200;
-let board_width = 500;
+let board_width = 600;
+let menu_width = 200;
 // fit for mobile device
 if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-    board_width = (window.innerWidth || document.body.clientWidth) - menu_width;
+    const width = (window.innerWidth || document.body.clientWidth);
+    board_width = width * 0.75;
+    menu_width = width * 0.25;
 }
 $canvas.width = board_width + menu_width;
 $canvas.height = board_width;
@@ -53,21 +55,24 @@ function draw() {
     $ctx.clearRect(0, 0, $canvas.width, $canvas.height);
 
     function draw_menu() {
-        $ctx.font = `26px serif`;
+        $ctx.font = `${menu_width * 0.1}px serif`;
         $ctx.fillStyle = "black";
+        const dx = menu_width * 0.1;
+        const dy = board_width * 0.1;
         var y = 0;
-        y += 50;
-        $ctx.fillText(`PlayTime: ${$game.current_time} s`, board_width + 10, y);
-        y += 50;
-        $ctx.fillText(`Block: ${$game.remain_block}`, board_width + 10, y);
-        y += 50;
-        $ctx.fillText(`Point: ${$game.point}`, board_width + 10, y);
-        y += 50;
-        $ctx.fillText('flag: ', board_width + 10, y);
-        $ctx.drawImage($imgs['flag'], board_width + 90, y - 25, 25, 25);
-        y += 50;
-        $ctx.fillText('mine: ', board_width + 10, y);
-        $ctx.drawImage($imgs['mine'], board_width + 90, y - 25, 25, 25);
+        y += dy;
+        $ctx.fillText(`PlayTime: ${$game.current_time} s`, board_width + dx, y);
+        y += dy;
+        $ctx.fillText(`Block: ${$game.remain_block}`, board_width + dx, y);
+        y += dy;
+        $ctx.fillText(`Point: ${$game.point}`, board_width + dx, y);
+        y += dy;
+        const img_size = dx * 2;
+        $ctx.fillText('flag: ', board_width + dx, y);
+        $ctx.drawImage($imgs['flag'], board_width + dx * 4, y - img_size, img_size, img_size);
+        y += dy;
+        $ctx.fillText('mine: ', board_width + dx, y);
+        $ctx.drawImage($imgs['mine'], board_width + dx * 4, y - img_size, img_size, img_size);
     }
     draw_menu();
 
