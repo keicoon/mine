@@ -32,6 +32,11 @@ function getGameConfig(keyword) {
 }
 
 var $anim = [];
+const flag_img = new Image(65, 65);
+flag_img.src = "flag.jpg";
+const mine_img = new Image(65, 65);
+mine_img.src = 'mine.jpg';
+
 function draw() {
     var { block_side_num } = getGameConfig("level_table");
 
@@ -47,6 +52,12 @@ function draw() {
         $ctx.fillText(`Block: ${$game.remain_block}`, board_width + 10, y);
         y += 50;
         $ctx.fillText(`Point: ${$game.point}`, board_width + 10, y);
+        y += 50;
+        $ctx.fillText('flag: ', board_width + 10, y);
+        $ctx.drawImage(flag_img, board_width + 90, y - 25, 25, 25);
+        y += 50;
+        $ctx.fillText('mine: ', board_width + 10, y);
+        $ctx.drawImage(mine_img, board_width + 90, y - 25, 25, 25);
     }
     menu();
 
@@ -79,12 +90,7 @@ function draw() {
         for (var i = 0; i < block_side_num ** 2; i++) {
             var block = $game.blocks[i];
             if (block.state === 1) {
-                $ctx.strokeStyle = $ctx.fillStyle = "red";
-                $ctx.beginPath();
-                $ctx.arc(block.x + block.width * 0.5, block.y + block.width * 0.5, block.width * 0.25, 0, 2 * Math.PI);
-                $ctx.stroke();
-
-                $ctx.fill();
+                $ctx.drawImage(mine_img, block.x + 2, block.y + 2, block.width - 4, block.width - 4);
             }
         }
     }
@@ -96,12 +102,7 @@ function draw() {
         for (var i = 0; i < block_side_num ** 2; i++) {
             var block = $game.blocks[i];
             if (block.user_state === 1) {
-                $ctx.strokeStyle = $ctx.fillStyle = "green";
-                $ctx.beginPath();
-                $ctx.moveTo(block.x, block.y);
-                $ctx.lineTo(block.x + block.width, block.y);
-                $ctx.lineTo(block.x, block.y + block.width);
-                $ctx.fill();
+                $ctx.drawImage(flag_img, block.x + 2, block.y + 2, block.width - 4, block.width - 4);
             }
         }
     }
