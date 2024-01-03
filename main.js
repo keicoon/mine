@@ -2,7 +2,11 @@ var $canvas = document.createElement("canvas");
 document.body.appendChild($canvas);
 
 const menu_width = 200;
-const board_width = 500;
+let board_width = 500;
+if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+    // true for mobile device
+    board_width  = (window.innerWidth  || document.body.clientWidth) - menu_width;
+}
 $canvas.width = board_width + menu_width;
 $canvas.height = board_width;
 $canvas.border = "3px solid dark";
@@ -409,7 +413,7 @@ function init() {
     })
     $canvas.addEventListener("mouseup", (event) => {
         var rect = $canvas.getBoundingClientRect();
-        $event_queue.push({ which: event.button == 2 ? 1 : 0, x: event.clientX- rect.left, y: event.clientY - rect.top});
+        $event_queue.push({ which: event.button == 2 ? 1 : 0, x: event.clientX - rect.left, y: event.clientY - rect.top });
     });
 }
 
