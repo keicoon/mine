@@ -1,10 +1,13 @@
+// '$' variable is global ( on script scope )
+// 'is_debug' is only used for developer.
+
 var $canvas = document.createElement("canvas");
 document.getElementById('canvas').appendChild($canvas);
 
 const menu_width = 200;
 let board_width = 500;
+// fit for mobile device
 if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-    // true for mobile device
     board_width = (window.innerWidth || document.body.clientWidth) - menu_width;
 }
 $canvas.width = board_width + menu_width;
@@ -15,12 +18,9 @@ var $ctx = $canvas.getContext("2d");
 
 var $game_config = {
     is_debug: false, // use only when debugging
-    current_level: 1,
-    board_width,
-    menu_width,
-    mine_num: 0,
-    block_side_num: 0,
-    select_type: -1
+    board_width, menu_width,
+    mine_num: 0, block_side_num: 0,
+    select_type: -1 // option for mobile
 }
 function getGameConfig(keyword) {
     switch (keyword) {
@@ -31,18 +31,28 @@ function getGameConfig(keyword) {
     }
 }
 
+var $imgs = {}
+function LoadImgage() {
+    function load(keyword, src, size) {
+        var img = new Image(size, size);
+        img.src = src;
+
+        $imgs[keyword] = img;
+    }
+
+    load("flag", "flag.jpg", 65);
+    load("mine", "mine.jpg", 65);
+}
+LoadImgage();
+
 var $anim = [];
-const flag_img = new Image(65, 65);
-flag_img.src = "flag.jpg";
-const mine_img = new Image(65, 65);
-mine_img.src = 'mine.jpg';
 
 function draw() {
     var { block_side_num } = getGameConfig("level_table");
-
+    // clear canvas
     $ctx.clearRect(0, 0, $canvas.width, $canvas.height);
 
-    function menu() {
+    function draw_menu() {
         $ctx.font = `26px serif`;
         $ctx.fillStyle = "black";
         var y = 0;
@@ -54,14 +64,14 @@ function draw() {
         $ctx.fillText(`Point: ${$game.point}`, board_width + 10, y);
         y += 50;
         $ctx.fillText('flag: ', board_width + 10, y);
-        $ctx.drawImage(flag_img, board_width + 90, y - 25, 25, 25);
+        $ctx.drawImage($imgs['flag'], board_width + 90, y - 25, 25, 25);
         y += 50;
         $ctx.fillText('mine: ', board_width + 10, y);
-        $ctx.drawImage(mine_img, board_width + 90, y - 25, 25, 25);
+        $ctx.drawImage($imgs['mine'], board_width + 90, y - 25, 25, 25);
     }
-    menu();
+    draw_menu();
 
-    function board() {
+    function draw_board() {
         for (var i = 0; i < block_side_num ** 2; i++) {
             var block = $game.blocks[i];
 
@@ -84,32 +94,32 @@ function draw() {
             $ctx.stroke();
         }
     }
-    board();
+    draw_board();
 
-    function mine() {
+    function draw_mine() {
         for (var i = 0; i < block_side_num ** 2; i++) {
             var block = $game.blocks[i];
             if (block.state === 1) {
-                $ctx.drawImage(mine_img, block.x + 2, block.y + 2, block.width - 4, block.width - 4);
+                $ctx.drawImage($imgs['mine'], block.x + 2, block.y + 2, block.width - 4, block.width - 4);
             }
         }
     }
     if ($game.game_state === 0 || $game_config.is_debug) {
-        mine();
+        draw_mine();
     }
 
-    function flag() {
+    function draw_flag() {
         for (var i = 0; i < block_side_num ** 2; i++) {
             var block = $game.blocks[i];
             if (block.user_state === 1) {
-                $ctx.drawImage(flag_img, block.x + 2, block.y + 2, block.width - 4, block.width - 4);
+                $ctx.drawImage($imgs['flag'], block.x + 2, block.y + 2, block.width - 4, block.width - 4);
             }
         }
     }
-    flag();
+    draw_flag();
 
-    function mine_num() {
-        var mine_num_color = [
+    function draw_mine_num() {
+        const mine_num_color = [
             "blue", // 1
             "green", // 2
             "red", // 3
@@ -130,9 +140,9 @@ function draw() {
             }
         }
     }
-    mine_num();
+    draw_mine_num();
 
-    function fx(anim) {
+    function draw_fx(anim) {
         $ctx.save();
 
         $ctx.fillStyle = anim.color;
@@ -144,23 +154,27 @@ function draw() {
         $ctx.restore();
     }
     for (var i = 0; i < $anim.length; i++) {
-        fx($anim[i]);
+        draw_fx($anim[i]);
     }
 }
 
-var $fx_event_queue = [];
-var $event_queue = [];
 function add_block_fx(block, delay = 0) {
     var x = block.x + block.width * 0.5;
     var y = block.y + block.width * 0.5;
-    $fx_event_queue.push({ x, y, width: block.width, delay: Math.min(delay, 7) });
+    $fx_event_queue.push({
+        x, y, width: block.width,
+        // delay is smaller then 7 ( depth )
+        delay: Math.min(delay, 7)
+    });
 }
+
+var $event_queue = [];
+var $fx_event_queue = [];
 function update() {
     for (var i = $anim.length - 1; i >= 0; i--) {
         var anim = $anim[i];
-        anim.width *= 0.9;
-        anim.alpha -= 0.1;
-        anim.degree += 15;
+        // change
+        anim.width *= 0.9; anim.alpha -= 0.1; anim.degree += 15;
         if (anim.alpha < 0) {
             $anim.splice(i, 1);
         }
@@ -170,30 +184,29 @@ function update() {
 
     var { block_side_num } = getGameConfig("level_table");
 
-    function process_event(event_container) {
-        var { which, x, y } = event_container;
-        for (var i = 0; i < block_side_num ** 2; i++) {
-            var block = $game.blocks[i];
-
-            if (block.is_on({ x, y })) {
-                handle_button(which, block);
-                break;
+    function process_event() {
+        for (var i = 0; i < $event_queue.length; i++) {
+            var { which, x, y } = $event_queue[i];
+            for (var i = 0; i < block_side_num ** 2; i++) {
+                var block = $game.blocks[i];
+                // AABB
+                if (block.is_on({ x, y })) {
+                    handle_button(which, block);
+                    break;
+                }
             }
         }
+        $event_queue = [];
     }
-    if ($game.game_state === 1) {
-        for (var i = 0; i < $event_queue.length; i++) {
-            process_event($event_queue[i]);
-        }
-
+    function process_fx() {
         for (var i = $fx_event_queue.length - 1; i >= 0; i--) {
             var fx = $fx_event_queue[i];
             if (fx.delay <= 0) {
                 $anim.push({
                     x: fx.x, y: fx.y, width: fx.width,
+                    // color for animation
                     color: "yellow",
-                    alpha: 1.0,
-                    degree: 0
+                    alpha: 1.0, degree: 0
                 })
                 $fx_event_queue.splice(i, 1);
             } else {
@@ -201,7 +214,11 @@ function update() {
             }
         }
     }
-    function try_chain_block(block) {
+    if ($game.game_state === 1) {
+        process_event($event_queue[i]);
+        process_fx();
+    }
+    function process_chain_block(block) {
         var { block_side_num } = getGameConfig("level_table");
         var blocks = $game.blocks;
 
@@ -249,7 +266,7 @@ function update() {
                 $game.point += 10 + bonus;
             }
 
-            chain_block.user_state = 0; // reset
+            chain_block.user_state = 0;
             chain_block.visibility = 1;
 
             add_block_fx(chain_block, chain_block_depth[i]);
@@ -268,7 +285,7 @@ function update() {
     }
     function left_button(block) {
         if (block.visibility === 0) {
-            block.user_state = 0; // reset
+            block.user_state = 0;
             block.visibility = 1;
 
             if (block.state === 1) {
@@ -279,10 +296,10 @@ function update() {
 
             $game.remain_block -= 1;
             // succ
-            $game.point += 10; // default
+            $game.point += 10;
             add_block_fx(block);
 
-            try_chain_block(block);
+            process_chain_block(block);
 
             if ($game.remain_block === 0) {
                 $game.end_time = Date.now();
@@ -307,9 +324,16 @@ function update() {
         }
     }
 
-    $event_queue = [];
+    // update time
+    const prev_seoncds = $game.current_time;
+    $game.current_time = Math.floor((Date.now() - $game.start_time) * 0.001); // for seconds
+    if ($game.current_time - prev_seoncds >= 1) {
+        update_by_one_seconds();
+    }
+}
 
-    $game.current_time = Math.floor((Date.now() - $game.start_time) * 0.001);
+function update_by_one_seconds() {
+    $game.point = Math.max($game.point - 1, 0); // penalty
 }
 
 var $game = {
@@ -322,6 +346,7 @@ var $game = {
 };
 function game_over(win) {
     $game.game_state = 0;
+
     if (!win) { alert("game over"); }
     else { alert("game win"); }
 }
@@ -331,9 +356,9 @@ function init() {
     var block_width = board_width / block_side_num;
 
     var blocks = [];
-    // state ( 0 is none / 1 is mine )
-    // user_state ( 0 is none / 1 is flag )
     function add_block(state) {
+        // state ( 0 is none / 1 is mine )
+        // user_state ( 0 is none / 1 is flag )
         return {
             state, user_state: 0, visibility: 0, nearest_mine_num: 0,
             id: 0, x: 0, y: 0, width: block_width
